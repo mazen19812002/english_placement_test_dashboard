@@ -375,7 +375,7 @@
             <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">
               <i class="fa-solid fa-user-xmark text-brand-600"></i> قائمة الغائبين والطلاب الحاصلين على 7 فأقل
             </h3>
-            <p class="text-xs text-slate-500 mt-0.5">يتم المطابقة مع الكود في عمود B من ملف "قائمة طلاب الفرقة (اعدادي).xlsx"</p>
+            <p class="text-xs text-slate-500 mt-0.5">يتم المطابقة التلقائية مع قائمة الطلاب الكلية من Google Sheet (Sheet2)</p>
           </div>
           <button onclick="fetchAndProcessMasterList()" class="px-4 py-2 rounded-xl bg-brand-100 hover:bg-brand-200 text-brand-800 text-xs font-bold transition flex items-center gap-2">
             <i class="fa-solid fa-sync" id="masterSyncSpinner"></i> جلب ومطابقة البيانات
@@ -393,7 +393,7 @@
                 </tr>
               </thead>
               <tbody id="absentTbody" class="divide-y divide-brand-100/60 font-medium bg-white/50">
-                <tr><td colspan="2" class="p-8 text-center text-slate-500">اضغط على زر جلب البيانات أعلاه لقراءة ملف الإكسيل</td></tr>
+                <tr><td colspan="2" class="p-8 text-center text-slate-500">جاري مطابقة القائمة الكلية...</td></tr>
               </tbody>
             </table>
           </div>
@@ -430,7 +430,7 @@
     let allCombinedData = [];
     let currentFilteredData = [];
     let questionColumns = [];
-    let masterStudentList = []; // Excel Data List
+    let masterStudentList = []; // Excel / Sheet2 Master Student Data List
 
     // Chart instances
     let scoreDistChartInstance = null;
@@ -439,24 +439,47 @@
     
     let currentZoom = 1;
 
-    // Excel Reading & Processing Functions
+    // Excel & Online Sheet2 Master Student List Functions
     async function fetchAndProcessMasterList() {
       const spinner = document.getElementById('masterSyncSpinner');
-      spinner.classList.add('fa-spin');
+      if (spinner) spinner.classList.add('fa-spin');
       
       try {
-        // تشفير اسم الملف باللغة العربية ليتوافق مع روابط المتصفح و Github Pages
+        // Primary Source: Fetch Sheet2 directly from Google Spreadsheet
+        const onlineSheet2Url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet2&t=${Date.now()}`;
+        const res = await fetch(onlineSheet2Url);
+        
+        if (res.ok) {
+          const csvText = await res.text();
+          const rows = parseCSV(csvText);
+          
+          if (rows.length >= 2) {
+            const header = rows[0];
+            let codeIdx = header.findIndex(h => String(h).trim().includes('الكود'));
+            let nameIdx = header.findIndex(h => String(h).trim().includes('اسم الطالب') || String(h).trim().includes('الاسم'));
+            
+            if (codeIdx === -1) codeIdx = 1; // Default column B
+            if (nameIdx === -1) nameIdx = 2; // Default column C
+            
+            masterStudentList = rows.slice(1).map(row => ({
+              name: (row[nameIdx] || row[2] || 'غير مدون').trim(),
+              code: String(row[codeIdx] || row[1] || '').trim()
+            })).filter(s => s.code !== '' && s.code !== 'undefined' && s.code !== 'الكود' && s.code !== '#');
+
+            renderAbsentAndLowScores();
+            if (spinner) spinner.classList.remove('fa-spin');
+            return;
+          }
+        }
+        
+        // Fallback Source: Local or GitHub repository Excel file
         const fileName = encodeURI("قائمة طلاب الفرقة (اعدادي).xlsx");
-        
-        // المحاولة الأولى: المسار النسبي
         let response = await fetch(fileName);
-        
-        // المحاولة الثانية (الحل البديل الفوري): استخدام الرابط المباشر الذي وفرته في حال فشل الأولى
         if (!response.ok) {
           response = await fetch("https://raw.githubusercontent.com/mazen19812002/english_placement_test_dashboard/refs/heads/main/" + fileName);
         }
 
-        if (!response.ok) throw new Error("Excel file not found on GitHub");
+        if (!response.ok) throw new Error("Master student data source not available");
         
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -465,7 +488,6 @@
         
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
         
-        // Extract Name (col 0) and Code (col 1)
         masterStudentList = jsonData.map(row => ({
            name: row[0] || 'غير مدون', 
            code: String(row[1] || '').trim() 
@@ -474,10 +496,9 @@
         renderAbsentAndLowScores();
         
       } catch (error) {
-        console.error("Error reading master excel:", error);
-        alert("تعذر قراءة ملف الإكسيل. تأكد من رفع الملف بنفس الاسم وتحديث الصفحة.");
+        console.error("Error reading master student list:", error);
       } finally {
-        spinner.classList.remove('fa-spin');
+        if (spinner) spinner.classList.remove('fa-spin');
       }
     }
 
@@ -487,12 +508,12 @@
        const lowTbody = document.getElementById('lowScoreTbody');
        document.getElementById('lowScoreCount').innerText = lowScoreStudents.length;
        
-       if(lowScoreStudents.length === 0) {
+       if (lowScoreStudents.length === 0) {
          lowTbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-slate-500">لا يوجد طلاب حاصلين على 7 فأقل</td></tr>';
        } else {
          lowTbody.innerHTML = lowScoreStudents.map(s => `
            <tr class="hover:bg-amber-50/50 transition">
-             <td class="p-3">${s.name}</td>
+             <td class="p-3 font-semibold text-slate-800">${s.name}</td>
              <td class="p-3 font-mono text-slate-600">${s.code}</td>
              <td class="p-3 text-center font-extrabold text-rose-600">${s.score}</td>
            </tr>
@@ -501,8 +522,8 @@
 
        // 2. Process Absent Students
        const absentTbody = document.getElementById('absentTbody');
-       if(masterStudentList.length === 0) {
-          absentTbody.innerHTML = '<tr><td colspan="2" class="p-8 text-center text-slate-500">يرجى الضغط على (جلب ومطابقة البيانات) لقراءة ملف الإكسيل</td></tr>';
+       if (masterStudentList.length === 0) {
+          absentTbody.innerHTML = '<tr><td colspan="2" class="p-8 text-center text-slate-500">جاري التحميل من Sheet2... (أو اضغط جلب ومطابقة البيانات)</td></tr>';
           return;
        }
 
@@ -511,7 +532,7 @@
        
        document.getElementById('absentCount').innerText = absentStudents.length;
 
-       if(absentStudents.length === 0) {
+       if (absentStudents.length === 0) {
          absentTbody.innerHTML = '<tr><td colspan="2" class="p-8 text-center text-emerald-600 font-bold">لا يوجد غياب، جميع الطلاب أدوا الاختبار</td></tr>';
        } else {
          absentTbody.innerHTML = absentStudents.map(s => `
@@ -608,6 +629,9 @@
           allCombinedData.push(...dataRows);
         });
 
+        // Automatically fetch master student list from Sheet2 on sync
+        await fetchAndProcessMasterList();
+
         applyFilters();
 
         statusText.innerText = `Synced (${allCombinedData.length} total)`;
@@ -634,7 +658,7 @@
       renderQualificationMetrics(currentFilteredData);
       renderRosterTable(currentFilteredData);
       renderItemAnalysis(currentFilteredData);
-      renderAbsentAndLowScores(); // Execute rendering for the new tab data
+      renderAbsentAndLowScores();
     }
 
     function updateKPIs(data) {
