@@ -445,8 +445,18 @@
       spinner.classList.add('fa-spin');
       
       try {
-        const response = await fetch("قائمة طلاب الفرقة (اعدادي).xlsx");
-        if (!response.ok) throw new Error("Excel file not found");
+        // تشفير اسم الملف باللغة العربية ليتوافق مع روابط المتصفح و Github Pages
+        const fileName = encodeURI("قائمة طلاب الفرقة (اعدادي).xlsx");
+        
+        // المحاولة الأولى: المسار النسبي
+        let response = await fetch(fileName);
+        
+        // المحاولة الثانية (الحل البديل الفوري): استخدام الرابط المباشر الذي وفرته في حال فشل الأولى
+        if (!response.ok) {
+          response = await fetch("https://raw.githubusercontent.com/mazen19812002/english_placement_test_dashboard/refs/heads/main/" + fileName);
+        }
+
+        if (!response.ok) throw new Error("Excel file not found on GitHub");
         
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -465,7 +475,7 @@
         
       } catch (error) {
         console.error("Error reading master excel:", error);
-        alert("تعذر قراءة ملف 'قائمة طلاب الفرقة (اعدادي).xlsx' - تأكد من وجوده في نفس مسار Github الخاص بالمشروع.");
+        alert("تعذر قراءة ملف الإكسيل. تأكد من رفع الملف بنفس الاسم وتحديث الصفحة.");
       } finally {
         spinner.classList.remove('fa-spin');
       }
