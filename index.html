@@ -1,872 +1,221 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>English Placement Test 2026 - Synchronized Analytics</title>
+<!DOCTYPE html><html lang="en"><head>  <meta charset="UTF-8">  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>English Placement Test 2026 - Synchronized Analytics</title>
+  <!-- Tailwind CSS -->  <script src="https://cdn.tailwindcss.com"></script>    <!-- Chart.js -->  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- XLSX Library for Reading Excel File -->  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Font Awesome Icons -->  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->  <link rel="preconnect" href="https://fonts.googleapis.com">  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>    tailwind.config = {      theme: {        extend: {          fontFamily: {            sans: ['Plus Jakarta Sans', 'sans-serif'],          },          colors: {            brand: {              50: '#f0f9ff',              100: '#e0f2fe',              200: '#bae6fd',              300: '#7dd3fc',              400: '#38bdf8',              500: '#0ea5e9',              600: '#0284c7',              700: '#0369a1',              800: '#075985',              900: '#0c4a6e',            }          }        }      }    }  </script>
+  <style>    /* Custom Scrollbar & Utility Animations */    ::-webkit-scrollbar {      width: 8px;      height: 8px;    }    ::-webkit-scrollbar-track {      background: rgba(224, 242, 254, 0.5);    }    ::-webkit-scrollbar-thumb {      background: #7dd3fc;      border-radius: 9999px;    }    ::-webkit-scrollbar-thumb:hover {      background: #0284c7;    }
+    .glass-panel {      background: rgba(255, 255, 255, 0.65);      backdrop-filter: blur(16px);      -webkit-backdrop-filter: blur(16px);      border: 1px solid rgba(255, 255, 255, 0.8);    }
+    .glass-header {      background: rgba(255, 255, 255, 0.85);      backdrop-filter: blur(20px);      -webkit-backdrop-filter: blur(20px);      border-bottom: 1px solid rgba(224, 242, 254, 0.8);    }
+    .gradient-bg {      background: radial-gradient(circle at 10% 20%, rgb(224, 242, 254) 0%, rgb(186, 230, 253) 47.9%, rgb(125, 211, 252) 100%);    }
+    .footer-animated-bg {      background: linear-gradient(90deg, #0284c7, #0d9488, #2563eb, #0284c7);      background-size: 300% 100%;      animation: gradientShift 6s ease infinite;    }
+    @keyframes gradientShift {      0% { background-position: 0% 50%; }      50% { background-position: 100% 50%; }      100% { background-position: 0% 50%; }    }
+    .tab-btn.active {      background-color: #0284c7;      color: #ffffff;    }  </style></head><body class="gradient-bg min-h-screen text-slate-800 flex flex-col font-sans transition-all duration-300">
+  <header class="glass-header sticky top-0 z-50 px-4 md:px-10 py-3 shadow-sm border-b border-white/60">    <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-3 md:gap-6">            <!-- Title Section -->      <div class="flex items-center gap-3 shrink-0">        <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-lg shadow-brand-500/30">          <i class="fa-solid fa-graduation-cap text-lg"></i>        </div>        <div>          <h1 class="text-lg md:text-xl font-bold text-brand-900 leading-tight tracking-tight">English Placement Test 2026</h1>          <p class="text-xs text-brand-700 font-medium hidden sm:block">Multi-Source Synchronized Dashboard</p>        </div>      </div>
+      <!-- Synchronized Control Toolbar Top Bar -->      <div class="flex items-center flex-wrap gap-2.5 ml-auto">                <!-- Live Sync Status Tag -->        <div id="syncStatusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100/90 border border-emerald-300/80 text-emerald-800 text-xs font-semibold shadow-sm">          <span class="relative flex h-2 w-2">            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>          </span>          <span id="syncStatusText">Connecting...</span>        </div>
+        <!-- Sheet Selector Filter -->        <div class="relative">          <select id="sheetSourceFilter" onchange="applyFilters()" class="bg-white/90 hover:bg-white border border-brand-200 text-brand-900 text-xs font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition">            <option value="ALL">All Sheets Combined (3/3)</option>            <option value="Form Responses 1">Form Responses 1</option>            <option value="Form Responses 2">Form Responses 2</option>            <option value="Form Responses 3">Form Responses 3</option>          </select>        </div>
+        <!-- Manual Refresh Button -->        <button onclick="fetchAllData()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-brand-600/25">          <i class="fa-solid fa-arrows-rotate" id="syncSpinner"></i>          <span>Sync Now</span>        </button>
+        <!-- Display Controls (Zoom & Fullscreen) -->        <div class="flex items-center bg-white/80 border border-brand-200 rounded-xl p-0.5 shadow-sm">          <button onclick="adjustZoom(-0.05)" title="Zoom Out" class="p-1.5 px-2.5 text-brand-700 hover:text-brand-900 hover:bg-brand-100 rounded-lg transition"><i class="fa-solid fa-minus text-xs"></i></button>          <button onclick="adjustZoom(0.05)" title="Zoom In" class="p-1.5 px-2.5 text-brand-700 hover:text-brand-900 hover:bg-brand-100 rounded-lg transition"><i class="fa-solid fa-plus text-xs"></i></button>          <button onclick="toggleFullScreen()" title="Fullscreen" class="p-1.5 px-2.5 text-brand-700 hover:text-brand-900 hover:bg-brand-100 rounded-lg transition"><i class="fa-solid fa-expand text-xs"></i></button>        </div>      </div>    </div>  </header>
+  <main id="appContainer" class="max-w-[1700px] mx-auto px-4 md:px-10 py-6 w-full flex-grow space-y-6 transition-transform duration-200 origin-top">        <!-- KPI Overview Cards -->    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">            <!-- KPI 1 -->      <div class="glass-panel p-5 rounded-2xl shadow-sm border-l-4 border-l-brand-600 flex items-center justify-between">        <div>          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Combined</p>          <h3 id="kpiTotal" class="text-2xl md:text-3xl font-extrabold text-brand-900 mt-1">0</h3>          <p class="text-[11px] text-slate-500 mt-0.5">Responses collected</p>        </div>        <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center text-xl">          <i class="fa-solid fa-users"></i>        </div>      </div>
+      <!-- KPI 2 -->      <div class="glass-panel p-5 rounded-2xl shadow-sm border-l-4 border-l-emerald-500 flex items-center justify-between">        <div>          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Average Score</p>          <h3 id="kpiAvg" class="text-2xl md:text-3xl font-extrabold text-emerald-900 mt-1">0.0</h3>          <p class="text-[11px] text-slate-500 mt-0.5">Points out of 25</p>        </div>        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">          <i class="fa-solid fa-calculator"></i>        </div>      </div>
+      <!-- KPI 3 -->      <div class="glass-panel p-5 rounded-2xl shadow-sm border-l-4 border-l-amber-500 flex items-center justify-between">        <div>          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pass Rate (≥12)</p>          <h3 id="kpiPassRate" class="text-2xl md:text-3xl font-extrabold text-amber-900 mt-1">0%</h3>          <p class="text-[11px] text-slate-500 mt-0.5"><span id="kpiPassCount">0</span> passed</p>        </div>        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl">          <i class="fa-solid fa-chart-pie"></i>        </div>      </div>
+      <!-- KPI 4 -->      <div class="glass-panel p-5 rounded-2xl shadow-sm border-l-4 border-l-purple-500 flex items-center justify-between">        <div>          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">High / Low</p>          <h3 class="text-2xl md:text-3xl font-extrabold text-purple-900 mt-1">            <span id="kpiMax">0</span> <span class="text-sm font-normal text-slate-400">/ <span id="kpiMin">0</span></span>          </h3>          <p class="text-[11px] text-slate-500 mt-0.5">Score span range</p>        </div>        <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl">          <i class="fa-solid fa-trophy"></i>        </div>      </div>    </section>
+    <!-- Navigation Tabs -->    <div class="flex items-center justify-between border-b border-brand-200/80 pb-3 flex-wrap gap-3">      <div class="flex items-center gap-2 bg-white/60 p-1 rounded-2xl border border-brand-200 flex-wrap">        <button onclick="switchTab('analytics')" id="tabBtn-analytics" class="tab-btn active px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2">          <i class="fa-solid fa-chart-column"></i> Analytics Dashboard        </button>        <button onclick="switchTab('itemAnalysis')" id="tabBtn-itemAnalysis" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-brand-800 transition-all flex items-center gap-2">          <i class="fa-solid fa-list-check"></i> Question Item Analysis        </button>        <button onclick="switchTab('roster')" id="tabBtn-roster" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-brand-800 transition-all flex items-center gap-2">          <i class="fa-solid fa-table"></i> Student Roster (<span id="rosterBadgeCount">0</span>)        </button>        <!-- TAB FOR ABSENT & LOW PERFORMERS -->        <button onclick="switchTab('absentLow')" id="tabBtn-absentLow" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-rose-700 bg-rose-50/80 hover:bg-rose-100 border border-rose-200 transition-all flex items-center gap-2">          <i class="fa-solid fa-user-xmark text-rose-600"></i> الطلاب الغائبين والمنخفضين (≤ 7) (<span id="absentLowBadgeCount">0</span>)        </button>      </div>
+      <div class="flex items-center gap-2">        <button onclick="exportCSV()" class="px-3 py-2 rounded-xl bg-white/80 hover:bg-white text-slate-700 border border-brand-200 text-xs font-bold flex items-center gap-1.5 transition shadow-sm">          <i class="fa-solid fa-download text-brand-600"></i> Export Combined CSV        </button>      </div>    </div>
+    <!-- VIEW 1: ANALYTICS & CHARTS -->    <div id="view-analytics" class="space-y-6">            <!-- Charts Grid Row 1 -->      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">                <!-- Score Range Distribution Chart -->        <div class="glass-panel p-5 rounded-2xl shadow-sm">          <div class="flex items-center justify-between mb-4">            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">              <i class="fa-solid fa-chart-bar text-brand-600"></i> Score Range Distribution            </h3>            <span class="text-xs text-slate-500 font-medium">Scores 0 - 25</span>          </div>          <div class="h-64 relative">            <canvas id="scoreDistChart"></canvas>          </div>        </div>
+        <!-- Scores by Qualification Chart -->        <div class="glass-panel p-5 rounded-2xl shadow-sm">          <div class="flex items-center justify-between mb-4">            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">              <i class="fa-solid fa-graduation-cap text-brand-600"></i> Performance by Qualification            </h3>            <span class="text-xs text-slate-500 font-medium">Average score</span>          </div>          <div class="h-64 relative">            <canvas id="qualificationChart"></canvas>          </div>        </div>      </div>
+      <!-- Charts Grid Row 2 -->      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">                <!-- Sheet Source Breakdown -->        <div class="glass-panel p-5 rounded-2xl shadow-sm">          <div class="flex items-center justify-between mb-4">            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">              <i class="fa-solid fa-layer-group text-brand-600"></i> Responses by Form Sheet            </h3>          </div>          <div class="h-56 relative flex items-center justify-center">            <canvas id="sourceChart"></canvas>          </div>        </div>
+        <!-- Pass / Fail Proportions -->        <div class="glass-panel p-5 rounded-2xl shadow-sm lg:col-span-2">          <div class="flex items-center justify-between mb-4">            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">              <i class="fa-solid fa-sliders text-brand-600"></i> Qualification Summary Breakdown            </h3>          </div>                    <div id="qualificationMetricsTable" class="space-y-3 overflow-y-auto max-h-52 pr-1">            <!-- Dynamic metric cards inserted here -->          </div>        </div>      </div>    </div>
+    <!-- VIEW 2: ITEM ANALYSIS (QUESTION BY QUESTION) -->    <div id="view-itemAnalysis" class="hidden space-y-4">      <div class="glass-panel p-5 rounded-2xl shadow-sm">        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">          <div>            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">              <i class="fa-solid fa-list-check text-brand-600"></i> Item Analysis & Response Distribution            </h3>            <p class="text-xs text-slate-500 mt-0.5">Calculates option frequency and question performance across all synchronized responses.</p>          </div>        </div>
+        <div id="questionsContainer" class="space-y-4">          <p class="text-center text-slate-500 py-8">Loading question data...</p>        </div>      </div>    </div>
+    <!-- VIEW 3: COMBINED ROSTER TABLE -->    <div id="view-roster" class="hidden space-y-4">      <div class="glass-panel p-5 rounded-2xl shadow-sm">                <!-- Table Toolbar -->        <div class="flex items-center justify-between gap-4 mb-4 flex-wrap">          <div class="flex items-center gap-3 flex-1 min-w-[260px]">            <div class="relative w-full max-w-md">              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>              <input type="text" id="tableSearch" onkeyup="filterRosterTable()" placeholder="Search by name, student code, qualification..." class="w-full pl-9 pr-4 py-2 bg-white/90 border border-brand-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-brand-500">            </div>          </div>
+          <div class="text-xs font-semibold text-slate-500">            Showing <span id="filteredRowCount" class="text-brand-700 font-bold">0</span> entries          </div>        </div>
+        <!-- Table Container -->        <div class="overflow-x-auto rounded-xl border border-brand-100 max-h-[500px]">          <table class="w-full text-left text-xs border-collapse">            <thead class="bg-brand-100/70 text-brand-900 sticky top-0 backdrop-blur-md z-10 font-bold">              <tr>                <th class="p-3">#</th>                <th class="p-3">Timestamp</th>                <th class="p-3">Score</th>                <th class="p-3">Student Name</th>                <th class="p-3">Code ID</th>                <th class="p-3">Qualification</th>                <th class="p-3">Source Sheet</th>                <th class="p-3 text-center">Status</th>              </tr>            </thead>            <tbody id="rosterTbody" class="divide-y divide-brand-100/60 font-medium">              <tr>                <td colspan="8" class="p-8 text-center text-slate-500">Loading student records...</td>              </tr>            </tbody>          </table>        </div>      </div>    </div>
 
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- VIEW 4: ABSENT & LOW PERFORMERS (≤ 7) TAB -->    <div id="view-absentLow" class="hidden space-y-4">      <div class="glass-panel p-5 rounded-2xl shadow-sm">        
+        <!-- Summary Cards for Absent / Low Performers -->        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">          <div class="bg-rose-50/80 border border-rose-200 p-4 rounded-xl flex items-center justify-between">            <div>              <p class="text-xs font-bold text-rose-800 uppercase tracking-wider">إجمالي الطلاب الغائبين</p>              <h4 id="absentCountCard" class="text-2xl font-extrabold text-rose-900 mt-1">0</h4>              <p class="text-[11px] text-rose-600">لم يسجلوا أي استجابة بالنظام</p>            </div>            <div class="w-10 h-10 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-lg">              <i class="fa-solid fa-user-slash"></i>            </div>          </div>
+          <div class="bg-amber-50/80 border border-amber-200 p-4 rounded-xl flex items-center justify-between">            <div>              <p class="text-xs font-bold text-amber-800 uppercase tracking-wider">طلاب الدرجات المنخفضة (≤ 7)</p>              <h4 id="lowScoreCountCard" class="text-2xl font-extrabold text-amber-900 mt-1">0</h4>              <p class="text-[11px] text-amber-600">حاصلين على 7 درجات أو أقل</p>            </div>            <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-lg">              <i class="fa-solid fa-triangle-exclamation"></i>            </div>          </div>
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+          <div class="bg-slate-50/80 border border-slate-200 p-4 rounded-xl flex items-center justify-between">            <div>              <p class="text-xs font-bold text-slate-700 uppercase tracking-wider">إجمالي كشف المتابعة</p>              <h4 id="totalFollowUpCard" class="text-2xl font-extrabold text-slate-900 mt-1">0</h4>              <p class="text-[11px] text-slate-500">غائبين + درجات منخفضة</p>            </div>            <div class="w-10 h-10 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center text-lg">              <i class="fa-solid fa-clipboard-list"></i>            </div>          </div>        </div>
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Plus Jakarta Sans', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              50: '#f0f9ff',
-              100: '#e0f2fe',
-              200: '#bae6fd',
-              300: '#7dd3fc',
-              400: '#38bdf8',
-              500: '#0ea5e9',
-              600: '#0284c7',
-              700: '#0369a1',
-              800: '#075985',
-              900: '#0c4a6e',
-            }
-          }
-        }
-      }
-    }
-  </script>
+        <!-- Toolbar & Filter Controls -->        <div class="flex items-center justify-between gap-4 mb-4 flex-wrap">          <div class="flex items-center gap-3 flex-1 min-w-[260px]">            <div class="relative w-full max-w-md">              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>              <input type="text" id="absentSearch" onkeyup="filterAbsentLowTable()" placeholder="ابحث باسم الطالب، الكود، أو الحالة..." class="w-full pl-9 pr-4 py-2 bg-white/90 border border-brand-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-brand-500">            </div>          </div>
 
-  <style>
-    /* Custom Scrollbar & Utility Animations */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(224, 242, 254, 0.5);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #7dd3fc;
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #0284c7;
-    }
+          <!-- Type Filter Toggle -->          <div class="flex items-center gap-1.5 bg-white/80 p-1 rounded-xl border border-slate-200 text-xs font-bold">            <button onclick="setAbsentFilterCategory('ALL')" id="filterCat-ALL" class="px-3 py-1.5 rounded-lg bg-brand-600 text-white transition">الكل</button>            <button onclick="setAbsentFilterCategory('ABSENT')" id="filterCat-ABSENT" class="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition">الغائبون فقط</button>            <button onclick="setAbsentFilterCategory('LOW')" id="filterCat-LOW" class="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition">الدرجات المنخفضة (≤ 7)</button>          </div>
 
-    .glass-panel {
-      background: rgba(255, 255, 255, 0.65);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-    }
+          <button onclick="exportAbsentLowCSV()" class="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-sm">            <i class="fa-solid fa-file-export"></i> تصدير كشف المتابعة (CSV)          </button>        </div>
 
-    .glass-header {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(224, 242, 254, 0.8);
-    }
-
-    .gradient-bg {
-      background: radial-gradient(circle at 10% 20%, rgb(224, 242, 254) 0%, rgb(186, 230, 253) 47.9%, rgb(125, 211, 252) 100%);
-    }
-
-    .footer-animated-bg {
-      background: linear-gradient(90deg, #0284c7, #0d9488, #2563eb, #0284c7);
-      background-size: 300% 100%;
-      animation: gradientShift 6s ease infinite;
-    }
-
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .tab-btn.active {
-      background-color: #0284c7;
-      color: #ffffff;
-    }
-  </style>
-</head>
-<body class="gradient-bg min-h-screen text-slate-800 flex flex-col font-sans transition-all duration-300">
-
-  <header class="glass-header sticky top-0 z-50 px-4 md:px-10 py-3 shadow-sm border-b border-white/60">
-    <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-3 md:gap-6">
-      
-      <!-- Title Section -->
-      <div class="flex items-center gap-3 shrink-0">
-        <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-lg shadow-brand-500/30">
-          <i class="fa-solid fa-graduation-cap text-lg"></i>
-        </div>
-        <div>
-          <h1 class="text-lg md:text-xl font-bold text-brand-900 leading-tight tracking-tight">English Placement Test 2026</h1>
-          <p class="text-xs text-brand-700 font-medium hidden sm:block">Multi-Source Synchronized Dashboard</p>
-        </div>
-      </div>
-
-      <!-- Synchronized Control Toolbar Top Bar -->
-      <div class="flex items-center flex-wrap gap-2.5 ml-auto">
-        
-        <!-- Live Sync Status Tag -->
-        <div id="syncStatusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100/90 border border-emerald-300/80 text-emerald-800 text-xs font-semibold shadow-sm">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span id="syncStatusText">Connecting...</span>
-        </div>
-
-        <!-- Sheet Selector Filter -->
-        <div class="relative">
-          <select id="sheetSourceFilter" onchange="applyFilters()" class="bg-white/90 hover:bg-white border border-brand-200 text-brand-900 text-xs font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition">
-            <option value="ALL">All Sheets Combined (3/3)</option>
-            <option value="Form Responses 1">Form Responses 1</option>
-            <option value="Form Responses 2">Form Responses 2</option>
-            <option value="Form Responses 3">Form Responses 3</option>
-          </select>
-        </div>
-
-        <!-- Manual Refresh Button -->
-        <button onclick="fetchAllData()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-brand-600/25">
-          <i class="fa-solid fa-arrows-rotate" id="syncSpinner"></i>
-          <span>Sync Now</span>
-        </button>
-
-        <!-- Display Controls (Zoom & Fullscreen) -->
-        <div class="flex items-center bg-white/80 border border-brand-200 rounded-xl p-0.5 shadow-sm">
-          <button onclick="adjustZoom(-0.05)" title="Zoom Out" class="p-1.5 px-2.5 text-brand-700 hover:text-brand-900 hover:bg-brand-100 rounded-lg transition"><i class="fa-solid fa-minus text-xs"></i></button>
-          <button onclick="adjustZoom(0.05)" title="Zoom In" class="p-1.5 px-2.5 text-brand-700 hover:text-brand-900 hover:bg-brand-100 rounded-lg transition"><i class="fa-solid fa-plus text-xs"></i></button>
-          <button onclick="toggleFullScreen()" title="Fullscreen" class="p-1.5 px-2.5 text-brand-700 hover:text-brand-900 hover:bg-brand-100 rounded-lg transition"><i class="fa-solid fa-expand text-xs"></i></button>
-        </div>
-
-      </div>
-
-    </div>
-  </header>
-
-  <main id="appContainer" class="max-w-[1700px] mx-auto px-4 md:px-10 py-6 w-full flex-grow space-y-6 transition-transform duration-200 origin-top">
-    
-    <!-- KPI Overview Cards -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      
-      <!-- KPI 1 -->
-      <div class="glass-panel p-5 rounded-2xl shadow-sm border-l-4 border-l-brand-600 flex items-center justify-between">
-        <div>
-          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Combined</p>
-          <h3 id="kpiTotal" class="text-2xl md:text-3xl font-extrabold text-brand-900 mt-1">0</h3>
-          <p class="text-[11px] text-slate-500 mt-0.5">Responses collected</p>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center text-xl">
-          <i class="fa-solid fa-users"></i>
-        </div>
-      </div>
-
-      <!-- KPI 2 -->
-      <div class="glass-panel p-5 rounded-2xl shadow-sm border-l-4 border-l-emerald-500 flex items-center justify-between">
-        <div>
-          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Average Score</p>
-          <h3 id="kpiAvg" class="text-2xl md:text-3xl font-extrabold text-emerald-900 mt-1">0.0</h3>
-          <p class="text-[11px] text-slate-500 mt-0.5">Points out of 25</p>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
-          <i class="fa-solid fa-calculator"></i>
-        </div>
-      </div>
-
-      <!-- KPI 3 -->
-      <div class="glass-panel p-5 rounded-2xl shadow-sm border-l-4 border-l-amber-500 flex items-center justify-between">
-        <div>
-          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pass Rate (≥12)</p>
-          <h3 id="kpiPassRate" class="text-2xl md:text-3xl font-extrabold text-amber-900 mt-1">0%</h3>
-          <p class="text-[11px] text-slate-500 mt-0.5"><span id="kpiPassCount">0</span> passed</p>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl">
-          <i class="fa-solid fa-chart-pie"></i>
-        </div>
-      </div>
-
-      <!-- KPI 4 -->
-      <div class="glass-panel p-5 rounded-2xl shadow-sm border-l-4 border-l-purple-500 flex items-center justify-between">
-        <div>
-          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">High / Low</p>
-          <h3 class="text-2xl md:text-3xl font-extrabold text-purple-900 mt-1">
-            <span id="kpiMax">0</span> <span class="text-sm font-normal text-slate-400">/ <span id="kpiMin">0</span></span>
-          </h3>
-          <p class="text-[11px] text-slate-500 mt-0.5">Score span range</p>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
-          <i class="fa-solid fa-trophy"></i>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- Navigation Tabs -->
-    <div class="flex items-center justify-between border-b border-brand-200/80 pb-3 flex-wrap gap-3">
-      <div class="flex items-center gap-2 bg-white/60 p-1 rounded-2xl border border-brand-200">
-        <button onclick="switchTab('analytics')" id="tabBtn-analytics" class="tab-btn active px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2">
-          <i class="fa-solid fa-chart-column"></i> Analytics Dashboard
-        </button>
-        <button onclick="switchTab('itemAnalysis')" id="tabBtn-itemAnalysis" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-brand-800 transition-all flex items-center gap-2">
-          <i class="fa-solid fa-list-check"></i> Question Item Analysis
-        </button>
-        <button onclick="switchTab('roster')" id="tabBtn-roster" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-brand-800 transition-all flex items-center gap-2">
-          <i class="fa-solid fa-table"></i> Student Roster (<span id="rosterBadgeCount">0</span>)
-        </button>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <button onclick="exportCSV()" class="px-3 py-2 rounded-xl bg-white/80 hover:bg-white text-slate-700 border border-brand-200 text-xs font-bold flex items-center gap-1.5 transition shadow-sm">
-          <i class="fa-solid fa-download text-brand-600"></i> Export Combined CSV
-        </button>
-      </div>
-    </div>
-
-    <!-- VIEW 1: ANALYTICS & CHARTS -->
-    <div id="view-analytics" class="space-y-6">
-      
-      <!-- Charts Grid Row 1 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- Score Range Distribution Chart -->
-        <div class="glass-panel p-5 rounded-2xl shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">
-              <i class="fa-solid fa-chart-bar text-brand-600"></i> Score Range Distribution
-            </h3>
-            <span class="text-xs text-slate-500 font-medium">Scores 0 - 25</span>
-          </div>
-          <div class="h-64 relative">
-            <canvas id="scoreDistChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Scores by Qualification Chart -->
-        <div class="glass-panel p-5 rounded-2xl shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">
-              <i class="fa-solid fa-graduation-cap text-brand-600"></i> Performance by Qualification
-            </h3>
-            <span class="text-xs text-slate-500 font-medium">Average score</span>
-          </div>
-          <div class="h-64 relative">
-            <canvas id="qualificationChart"></canvas>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Charts Grid Row 2 -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Sheet Source Breakdown -->
-        <div class="glass-panel p-5 rounded-2xl shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">
-              <i class="fa-solid fa-layer-group text-brand-600"></i> Responses by Form Sheet
-            </h3>
-          </div>
-          <div class="h-56 relative flex items-center justify-center">
-            <canvas id="sourceChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Pass / Fail Proportions -->
-        <div class="glass-panel p-5 rounded-2xl shadow-sm lg:col-span-2">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">
-              <i class="fa-solid fa-sliders text-brand-600"></i> Qualification Summary Breakdown
-            </h3>
-          </div>
-          
-          <div id="qualificationMetricsTable" class="space-y-3 overflow-y-auto max-h-52 pr-1">
-            <!-- Dynamic metric cards inserted here -->
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- VIEW 2: ITEM ANALYSIS (QUESTION BY QUESTION) -->
-    <div id="view-itemAnalysis" class="hidden space-y-4">
-      <div class="glass-panel p-5 rounded-2xl shadow-sm">
-        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div>
-            <h3 class="font-bold text-brand-900 text-base flex items-center gap-2">
-              <i class="fa-solid fa-list-check text-brand-600"></i> Item Analysis & Response Distribution
-            </h3>
-            <p class="text-xs text-slate-500 mt-0.5">Calculates option frequency and question performance across all synchronized responses.</p>
-          </div>
-        </div>
-
-        <div id="questionsContainer" class="space-y-4">
-          <p class="text-center text-slate-500 py-8">Loading question data...</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- VIEW 3: COMBINED ROSTER TABLE -->
-    <div id="view-roster" class="hidden space-y-4">
-      <div class="glass-panel p-5 rounded-2xl shadow-sm">
-        
-        <!-- Table Toolbar -->
-        <div class="flex items-center justify-between gap-4 mb-4 flex-wrap">
-          <div class="flex items-center gap-3 flex-1 min-w-[260px]">
-            <div class="relative w-full max-w-md">
-              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-              <input type="text" id="tableSearch" onkeyup="filterRosterTable()" placeholder="Search by name, student code, qualification..." class="w-full pl-9 pr-4 py-2 bg-white/90 border border-brand-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-brand-500">
-            </div>
-          </div>
-
-          <div class="text-xs font-semibold text-slate-500">
-            Showing <span id="filteredRowCount" class="text-brand-700 font-bold">0</span> entries
-          </div>
-        </div>
-
-        <!-- Table Container -->
-        <div class="overflow-x-auto rounded-xl border border-brand-100 max-h-[500px]">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead class="bg-brand-100/70 text-brand-900 sticky top-0 backdrop-blur-md z-10 font-bold">
-              <tr>
-                <th class="p-3">#</th>
-                <th class="p-3">Timestamp</th>
-                <th class="p-3">Score</th>
-                <th class="p-3">Student Name</th>
-                <th class="p-3">Code ID</th>
-                <th class="p-3">Qualification</th>
-                <th class="p-3">Source Sheet</th>
-                <th class="p-3 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody id="rosterTbody" class="divide-y divide-brand-100/60 font-medium">
-              <tr>
-                <td colspan="8" class="p-8 text-center text-slate-500">Loading student records...</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-    </div>
-
+        <!-- Table Container -->        <div class="overflow-x-auto rounded-xl border border-brand-100 max-h-[500px]">          <table class="w-full text-right text-xs border-collapse" dir="rtl">            <thead class="bg-rose-100/80 text-rose-950 sticky top-0 backdrop-blur-md z-10 font-bold">              <tr>                <th class="p-3 text-center">#</th>                <th class="p-3 text-center">كود الطالب</th>                <th class="p-3">اسم الطالب</th>                <th class="p-3 text-center">الدرجة</th>                <th class="p-3 text-center">حالة الحضور/النتيجة</th>                <th class="p-3">النوع / المؤهل</th>                <th class="p-3 text-center">مصدر البيانات</th>              </tr>            </thead>            <tbody id="absentLowTbody" class="divide-y divide-brand-100/60 font-medium">              <tr>                <td colspan="7" class="p-8 text-center text-slate-500">جاري تحميل ومطابقة بيانات الكشوفات...</td>              </tr>            </tbody>          </table>        </div>      </div>    </div>
   </main>
+  <footer class="footer-animated-bg text-white py-3.5 px-4 text-center text-xs font-bold tracking-wide shadow-inner mt-auto">    All rights are reserved to Dr. Mazen Badawy – Doctor of English Teaching & Testing  </footer>
+  <script>    const SPREADSHEET_ID = '16LBqGgty5Qgp_NE5kYtrKr6OP2WSXHDzXKojcT3GZ0I';    const SHEETS = ['Form Responses 1', 'Form Responses 2', 'Form Responses 3'];
+    // Excel Roster File Name in same directory on GitHub    const EXCEL_ROSTER_FILE = 'قائمة طلاب الفرقة (اعدادي).xlsx';
 
-  <footer class="footer-animated-bg text-white py-3.5 px-4 text-center text-xs font-bold tracking-wide shadow-inner mt-auto">
-    All rights are reserved to Dr. Mazen Badawy – Doctor of English Teaching & Testing
-  </footer>
+    let allCombinedData = [];    let currentFilteredData = [];    let questionColumns = [];
 
-  <script>
-    const SPREADSHEET_ID = '16LBqGgty5Qgp_NE5kYtrKr6OP2WSXHDzXKojcT3GZ0I';
-    const SHEETS = ['Form Responses 1', 'Form Responses 2', 'Form Responses 3'];
+    // Official Excel Roster Data    let officialExcelRoster = [];    let absentAndLowPerformersList = [];    let filteredAbsentLowList = [];    let currentAbsentFilterCat = 'ALL';
+    // Chart instances    let scoreDistChartInstance = null;    let qualificationChartInstance = null;    let sourceChartInstance = null;        let currentZoom = 1;
 
-    let allCombinedData = [];
-    let currentFilteredData = [];
-    let questionColumns = [];
+    // CSV Parser handling quotes and line breaks inside cells    function parseCSV(text) {      const lines = [];      let row = [];      let inQuotes = false;      let currentToken = '';
+      for (let i = 0; i < text.length; i++) {        const c = text[i];        const nextC = text[i + 1];
+        if (c === '"') {          if (inQuotes && nextC === '"') {            currentToken += '"';            i++;          } else {            inQuotes = !inQuotes;          }        } else if (c === ',' && !inQuotes) {          row.push(currentToken.trim());          currentToken = '';        } else if ((c === '\r' || c === '\n') && !inQuotes) {          if (c === '\r' && nextC === '\n') { i++; }          row.push(currentToken.trim());          if (row.length > 1 || row[0] !== '') lines.push(row);          row = [];          currentToken = '';        } else {          currentToken += c;        }      }      if (currentToken || row.length > 0) {        row.push(currentToken.trim());        lines.push(row);      }      return lines;    }
 
-    // Chart instances
-    let scoreDistChartInstance = null;
-    let qualificationChartInstance = null;
-    let sourceChartInstance = null;
-    
-    let currentZoom = 1;
+    // Fetch official Excel sheet from same directory    async function fetchOfficialExcelRoster() {      try {        const response = await fetch(EXCEL_ROSTER_FILE);        if (!response.ok) return;        const arrayBuffer = await response.arrayBuffer();        const workbook = XLSX.read(arrayBuffer, { type: 'array' });        const firstSheetName = workbook.SheetNames[0];        const worksheet = workbook.Sheets[firstSheetName];        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    // CSV Parser handling quotes and line breaks inside cells
-    function parseCSV(text) {
-      const lines = [];
-      let row = [];
-      let inQuotes = false;
-      let currentToken = '';
+        officialExcelRoster = [];        // Row 0 has column headers: Code is column index 2 (B), Name is column index 3        for (let i = 1; i < jsonData.length; i++) {          const row = jsonData[i];          if (!row || row.length < 4) continue;          const code = String(row[2] || '').trim();          const name = String(row[3] || '').trim();          const gender = String(row[17] || '').trim();          const qualification = String(row[11] || '').trim();
 
-      for (let i = 0; i < text.length; i++) {
-        const c = text[i];
-        const nextC = text[i + 1];
+          if (code && code !== 'الكود') {            officialExcelRoster.push({ code, name, gender, qualification });          }        }      } catch (e) {        console.warn("Could not load official excel roster file:", e);      }    }
 
-        if (c === '"') {
-          if (inQuotes && nextC === '"') {
-            currentToken += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (c === ',' && !inQuotes) {
-          row.push(currentToken.trim());
-          currentToken = '';
-        } else if ((c === '\r' || c === '\n') && !inQuotes) {
-          if (c === '\r' && nextC === '\n') { i++; }
-          row.push(currentToken.trim());
-          if (row.length > 1 || row[0] !== '') lines.push(row);
-          row = [];
-          currentToken = '';
-        } else {
-          currentToken += c;
-        }
-      }
-      if (currentToken || row.length > 0) {
-        row.push(currentToken.trim());
-        lines.push(row);
-      }
-      return lines;
-    }
+    async function fetchSingleSheet(sheetName) {      const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;      const res = await fetch(url);      const csv = await res.text();      return { sheetName, rows: parseCSV(csv) };    }
 
-    async function fetchSingleSheet(sheetName) {
-      const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;
-      const res = await fetch(url);
-      const csv = await res.text();
-      return { sheetName, rows: parseCSV(csv) };
-    }
+    async function fetchAllData() {      const statusText = document.getElementById('syncStatusText');      const spinner = document.getElementById('syncSpinner');            statusText.innerText = "Syncing...";      spinner.classList.add('fa-spin');
 
-    async function fetchAllData() {
-      const statusText = document.getElementById('syncStatusText');
-      const spinner = document.getElementById('syncSpinner');
-      
-      statusText.innerText = "Syncing...";
-      spinner.classList.add('fa-spin');
+      try {        // Load official excel file concurrently if available        await fetchOfficialExcelRoster();
 
-      try {
-        const results = await Promise.all(SHEETS.map(fetchSingleSheet));
-        
-        allCombinedData = [];
-        questionColumns = [];
+        const results = await Promise.all(SHEETS.map(fetchSingleSheet));                allCombinedData = [];        questionColumns = [];
 
-        results.forEach(({ sheetName, rows }) => {
-          if (rows.length < 2) return;
+        results.forEach(({ sheetName, rows }) => {          if (rows.length < 2) return;
 
-          const header = rows[0];
-          
-          // Capture question column titles from first valid sheet
-          if (questionColumns.length === 0 && header.length > 5) {
-            questionColumns = header.slice(5);
-          }
+          const header = rows[0];                    // Capture question column titles from first valid sheet          if (questionColumns.length === 0 && header.length > 5) {            questionColumns = header.slice(5);          }
 
-          const dataRows = rows.slice(1).map((r, idx) => {
-            const rawScore = parseFloat(r[1]) || 0;
-            return {
-              id: `${sheetName}-${idx}`,
-              timestamp: r[0] || '',
-              score: rawScore,
-              name: r[2] || 'Anonymous',
-              code: r[3] || 'N/A',
-              qualification: r[4] || 'Unspecified',
-              answers: r.slice(5),
-              sourceSheet: sheetName
-            };
-          });
+          const dataRows = rows.slice(1).map((r, idx) => {            const rawScore = parseFloat(r[1]) || 0;            return {              id: `${sheetName}-${idx}`,              timestamp: r[0] || '',              score: rawScore,              name: r[2] || 'Anonymous',              code: String(r[3] || '').trim(),              qualification: r[4] || 'Unspecified',              answers: r.slice(5),              sourceSheet: sheetName            };          });
 
-          allCombinedData.push(...dataRows);
-        });
+          allCombinedData.push(...dataRows);        });
 
         applyFilters();
 
-        statusText.innerText = `Synced (${allCombinedData.length} total)`;
-        spinner.classList.remove('fa-spin');
+        statusText.innerText = `Synced (${allCombinedData.length} total)`;        spinner.classList.remove('fa-spin');
 
-      } catch (err) {
-        console.error("Error syncing data:", err);
-        statusText.innerText = "Sync Error";
-        spinner.classList.remove('fa-spin');
-      }
-    }
+      } catch (err) {        console.error("Error syncing data:", err);        statusText.innerText = "Sync Error";        spinner.classList.remove('fa-spin');      }    }
 
-    function applyFilters() {
-      const sheetFilter = document.getElementById('sheetSourceFilter').value;
-      
-      if (sheetFilter === 'ALL') {
-        currentFilteredData = [...allCombinedData];
-      } else {
-        currentFilteredData = allCombinedData.filter(d => d.sourceSheet === sheetFilter);
-      }
+    function applyFilters() {      const sheetFilter = document.getElementById('sheetSourceFilter').value;            if (sheetFilter === 'ALL') {        currentFilteredData = [...allCombinedData];      } else {        currentFilteredData = allCombinedData.filter(d => d.sourceSheet === sheetFilter);      }
 
-      updateKPIs(currentFilteredData);
-      renderCharts(currentFilteredData);
-      renderQualificationMetrics(currentFilteredData);
-      renderRosterTable(currentFilteredData);
-      renderItemAnalysis(currentFilteredData);
-    }
+      updateKPIs(currentFilteredData);      renderCharts(currentFilteredData);      renderQualificationMetrics(currentFilteredData);      renderRosterTable(currentFilteredData);      renderItemAnalysis(currentFilteredData);      
+      // Process Absent & Low Performers Data      processAbsentAndLowPerformers();    }
 
-    function updateKPIs(data) {
-      const total = data.length;
-      document.getElementById('kpiTotal').innerText = total;
-      document.getElementById('rosterBadgeCount').innerText = total;
+    function updateKPIs(data) {      const total = data.length;      document.getElementById('kpiTotal').innerText = total;      document.getElementById('rosterBadgeCount').innerText = total;
 
-      if (total === 0) {
-        document.getElementById('kpiAvg').innerText = '0.0';
-        document.getElementById('kpiPassRate').innerText = '0%';
-        document.getElementById('kpiPassCount').innerText = '0';
-        document.getElementById('kpiMax').innerText = '0';
-        document.getElementById('kpiMin').innerText = '0';
-        return;
-      }
+      if (total === 0) {        document.getElementById('kpiAvg').innerText = '0.0';        document.getElementById('kpiPassRate').innerText = '0%';        document.getElementById('kpiPassCount').innerText = '0';        document.getElementById('kpiMax').innerText = '0';        document.getElementById('kpiMin').innerText = '0';        return;      }
 
-      const scores = data.map(d => d.score);
-      const avg = scores.reduce((a, b) => a + b, 0) / total;
-      const passes = scores.filter(s => s >= 12).length;
-      const passRate = ((passes / total) * 100).toFixed(1);
-      const max = Math.max(...scores);
-      const min = Math.min(...scores);
+      const scores = data.map(d => d.score);      const avg = scores.reduce((a, b) => a + b, 0) / total;      const passes = scores.filter(s => s >= 12).length;      const passRate = ((passes / total) * 100).toFixed(1);      const max = Math.max(...scores);      const min = Math.min(...scores);
 
-      document.getElementById('kpiAvg').innerText = avg.toFixed(2);
-      document.getElementById('kpiPassRate').innerText = `${passRate}%`;
-      document.getElementById('kpiPassCount').innerText = passes;
-      document.getElementById('kpiMax').innerText = max;
-      document.getElementById('kpiMin').innerText = min;
-    }
+      document.getElementById('kpiAvg').innerText = avg.toFixed(2);      document.getElementById('kpiPassRate').innerText = `${passRate}%`;      document.getElementById('kpiPassCount').innerText = passes;      document.getElementById('kpiMax').innerText = max;      document.getElementById('kpiMin').innerText = min;    }
 
-    function renderCharts(data) {
-      // 1. Score Distribution
-      const bins = { '0-5': 0, '6-10': 0, '11-15': 0, '16-20': 0, '21-25': 0 };
-      data.forEach(d => {
-        if (d.score <= 5) bins['0-5']++;
-        else if (d.score <= 10) bins['6-10']++;
-        else if (d.score <= 15) bins['11-15']++;
-        else if (d.score <= 20) bins['16-20']++;
-        else bins['21-25']++;
-      });
+    // Process Absent Students from Excel and Low Performers (<= 7)    function processAbsentAndLowPerformers() {      // Map of codes that submitted response in current filtered data      const submittedCodeMap = new Map();      currentFilteredData.forEach(d => {        if (d.code && d.code !== 'N/A') {          submittedCodeMap.set(d.code, d);        }      });
 
-      const ctxScore = document.getElementById('scoreDistChart').getContext('2d');
-      if (scoreDistChartInstance) scoreDistChartInstance.destroy();
+      absentAndLowPerformersList = [];      let absentCount = 0;      let lowCount = 0;
 
-      scoreDistChartInstance = new Chart(ctxScore, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(bins),
-          datasets: [{
-            label: 'Students',
-            data: Object.values(bins),
-            backgroundColor: 'rgba(2, 132, 199, 0.7)',
-            borderColor: '#0284c7',
-            borderWidth: 2,
-            borderRadius: 8
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
-      });
+      // 1. Identify Low Performers (Score <= 7) from responses      currentFilteredData.forEach(d => {        if (d.score <= 7) {          lowCount++;          absentAndLowPerformersList.push({            code: d.code || 'N/A',            name: d.name,            score: d.score,            status: 'LOW_SCORE',            statusLabel: 'ضعيف (≤ 7)',            qualification: d.qualification,            source: d.sourceSheet          });        }      });
 
-      // 2. Performance by Qualification
-      const qualGroup = {};
-      data.forEach(d => {
-        if (!qualGroup[d.qualification]) qualGroup[d.qualification] = { sum: 0, count: 0 };
-        qualGroup[d.qualification].sum += d.score;
-        qualGroup[d.qualification].count += 1;
-      });
+      // 2. Identify Absent Students (Present in Excel, missing in responses)      officialExcelRoster.forEach(student => {        if (!submittedCodeMap.has(student.code)) {          absentCount++;          absentAndLowPerformersList.push({            code: student.code,            name: student.name,            score: 'غائب',            status: 'ABSENT',            statusLabel: 'غائب لم يختبر',            qualification: student.qualification || 'إعدادي هندسة',            source: 'كشف الكلية الرسمي'          });        }      });
 
-      const qualLabels = Object.keys(qualGroup);
-      const qualAverages = qualLabels.map(k => (qualGroup[k].sum / qualGroup[k].count).toFixed(2));
+      document.getElementById('absentCountCard').innerText = absentCount;      document.getElementById('lowScoreCountCard').innerText = lowCount;      document.getElementById('totalFollowUpCard').innerText = absentAndLowPerformersList.length;      document.getElementById('absentLowBadgeCount').innerText = absentAndLowPerformersList.length;
 
-      const ctxQual = document.getElementById('qualificationChart').getContext('2d');
-      if (qualificationChartInstance) qualificationChartInstance.destroy();
+      filterAbsentLowTable();    }
 
-      qualificationChartInstance = new Chart(ctxQual, {
-        type: 'bar',
-        data: {
-          labels: qualLabels,
-          datasets: [{
-            label: 'Average Score',
-            data: qualAverages,
-            backgroundColor: 'rgba(13, 148, 136, 0.7)',
-            borderColor: '#0d9488',
-            borderWidth: 2,
-            borderRadius: 8
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, max: 25 } }
-        }
-      });
+    function setAbsentFilterCategory(cat) {      currentAbsentFilterCat = cat;      ['ALL', 'ABSENT', 'LOW'].forEach(c => {        const btn = document.getElementById(`filterCat-${c}`);        if (c === cat) {          btn.className = 'px-3 py-1.5 rounded-lg bg-brand-600 text-white transition';        } else {          btn.className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition';        }      });      filterAbsentLowTable();    }
 
-      // 3. Source Sheet Breakdown
-      const sourceCounts = {};
-      data.forEach(d => {
-        sourceCounts[d.sourceSheet] = (sourceCounts[d.sourceSheet] || 0) + 1;
-      });
+    function filterAbsentLowTable() {      const query = (document.getElementById('absentSearch').value || '').toLowerCase();      
+      filteredAbsentLowList = absentAndLowPerformersList.filter(item => {        const matchesCat = (currentAbsentFilterCat === 'ALL') ||                           (currentAbsentFilterCat === 'ABSENT' && item.status === 'ABSENT') ||                           (currentAbsentFilterCat === 'LOW' && item.status === 'LOW_SCORE');
+        const matchesQuery = item.name.toLowerCase().includes(query) ||                             item.code.toLowerCase().includes(query) ||                             item.statusLabel.toLowerCase().includes(query) ||                             item.qualification.toLowerCase().includes(query);
+        return matchesCat && matchesQuery;      });
 
-      const ctxSource = document.getElementById('sourceChart').getContext('2d');
-      if (sourceChartInstance) sourceChartInstance.destroy();
+      renderAbsentLowTable(filteredAbsentLowList);    }
 
-      sourceChartInstance = new Chart(ctxSource, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(sourceCounts),
-          datasets: [{
-            data: Object.values(sourceCounts),
-            backgroundColor: ['#0284c7', '#0d9488', '#8b5cf6'],
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom' } }
-        }
-      });
-    }
+    function renderAbsentLowTable(list) {      const tbody = document.getElementById('absentLowTbody');      tbody.innerHTML = '';
 
-    function renderQualificationMetrics(data) {
-      const container = document.getElementById('qualificationMetricsTable');
-      container.innerHTML = '';
+      if (list.length === 0) {        tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-500">لا توجد سجلات مطابقة للطلاب الغائبين أو المنخفضين.</td></tr>';        return;      }
 
-      const qualMap = {};
-      data.forEach(d => {
-        if (!qualMap[d.qualification]) {
-          qualMap[d.qualification] = { count: 0, sumScore: 0, passCount: 0 };
-        }
-        qualMap[d.qualification].count++;
-        qualMap[d.qualification].sumScore += d.score;
-        if (d.score >= 12) qualMap[d.qualification].passCount++;
-      });
+      list.forEach((item, i) => {        const tr = document.createElement('tr');        tr.className = 'hover:bg-rose-50/50 transition';
 
-      if (Object.keys(qualMap).length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">No qualification records found.</p>';
-        return;
-      }
+        const isAbsent = item.status === 'ABSENT';
 
-      Object.entries(qualMap).forEach(([qualName, stats]) => {
-        const avg = (stats.sumScore / stats.count).toFixed(2);
-        const passPct = ((stats.passCount / stats.count) * 100).toFixed(0);
+        tr.innerHTML = `          <td class="p-3 text-center text-slate-400 font-bold">${i + 1}</td>          <td class="p-3 text-center font-mono font-bold text-slate-800">${item.code}</td>          <td class="p-3 font-bold text-slate-900">${item.name}</td>          <td class="p-3 text-center font-extrabold ${isAbsent ? 'text-rose-600' : 'text-amber-700'}">${item.score}</td>          <td class="p-3 text-center">            <span class="px-2.5 py-1 rounded-full font-bold text-[11px] ${isAbsent ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">              ${item.statusLabel}            </span>          </td>          <td class="p-3 text-slate-700">${item.qualification}</td>          <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">${item.source}</span></td>        `;        tbody.appendChild(tr);      });    }
 
-        const card = document.createElement('div');
-        card.className = 'flex items-center justify-between p-3 rounded-xl bg-white/70 border border-brand-100 text-xs';
-        card.innerHTML = `
-          <div>
-            <span class="font-bold text-slate-800">${qualName}</span>
-            <div class="text-[11px] text-slate-500 mt-0.5">${stats.count} students (${stats.passCount} passed)</div>
-          </div>
-          <div class="text-right">
-            <span class="font-bold text-brand-700 text-sm">${avg} avg</span>
-            <div class="text-[11px] text-emerald-700 font-semibold mt-0.5">${passPct}% pass rate</div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
+    function renderCharts(data) {      // 1. Score Distribution      const bins = { '0-5': 0, '6-10': 0, '11-15': 0, '16-20': 0, '21-25': 0 };      data.forEach(d => {        if (d.score <= 5) bins['0-5']++;        else if (d.score <= 10) bins['6-10']++;        else if (d.score <= 15) bins['11-15']++;        else if (d.score <= 20) bins['16-20']++;        else bins['21-25']++;      });
 
-    function renderRosterTable(data) {
-      const tbody = document.getElementById('rosterTbody');
-      tbody.innerHTML = '';
+      const ctxScore = document.getElementById('scoreDistChart').getContext('2d');      if (scoreDistChartInstance) scoreDistChartInstance.destroy();
+
+      scoreDistChartInstance = new Chart(ctxScore, {        type: 'bar',        data: {          labels: Object.keys(bins),          datasets: [{            label: 'Students',            data: Object.values(bins),            backgroundColor: 'rgba(2, 132, 199, 0.7)',            borderColor: '#0284c7',            borderWidth: 2,            borderRadius: 8          }]        },        options: {          responsive: true,          maintainAspectRatio: false,          plugins: { legend: { display: false } },          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }        }      });
+
+      // 2. Performance by Qualification      const qualGroup = {};      data.forEach(d => {        if (!qualGroup[d.qualification]) qualGroup[d.qualification] = { sum: 0, count: 0 };        qualGroup[d.qualification].sum += d.score;        qualGroup[d.qualification].count += 1;      });
+
+      const qualLabels = Object.keys(qualGroup);      const qualAverages = qualLabels.map(k => (qualGroup[k].sum / qualGroup[k].count).toFixed(2));
+
+      const ctxQual = document.getElementById('qualificationChart').getContext('2d');      if (qualificationChartInstance) qualificationChartInstance.destroy();
+
+      qualificationChartInstance = new Chart(ctxQual, {        type: 'bar',        data: {          labels: qualLabels,          datasets: [{            label: 'Average Score',            data: qualAverages,            backgroundColor: 'rgba(13, 148, 136, 0.7)',            borderColor: '#0d9488',            borderWidth: 2,            borderRadius: 8          }]        },        options: {          responsive: true,          maintainAspectRatio: false,          plugins: { legend: { display: false } },          scales: { y: { beginAtZero: true, max: 25 } }        }      });
+
+      // 3. Source Sheet Breakdown      const sourceCounts = {};      data.forEach(d => {        sourceCounts[d.sourceSheet] = (sourceCounts[d.sourceSheet] || 0) + 1;      });
+
+      const ctxSource = document.getElementById('sourceChart').getContext('2d');      if (sourceChartInstance) sourceChartInstance.destroy();
+
+      sourceChartInstance = new Chart(ctxSource, {        type: 'doughnut',        data: {          labels: Object.keys(sourceCounts),          datasets: [{            data: Object.values(sourceCounts),            backgroundColor: ['#0284c7', '#0d9488', '#8b5cf6'],            borderWidth: 2          }]        },        options: {          responsive: true,          maintainAspectRatio: false,          plugins: { legend: { position: 'bottom' } }        }      });    }
+
+    function renderQualificationMetrics(data) {      const container = document.getElementById('qualificationMetricsTable');      container.innerHTML = '';
+
+      const qualMap = {};      data.forEach(d => {        if (!qualMap[d.qualification]) {          qualMap[d.qualification] = { count: 0, sumScore: 0, passCount: 0 };        }        qualMap[d.qualification].count++;        qualMap[d.qualification].sumScore += d.score;        if (d.score >= 12) qualMap[d.qualification].passCount++;      });
+
+      if (Object.keys(qualMap).length === 0) {        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">No qualification records found.</p>';        return;      }
+
+      Object.entries(qualMap).forEach(([qualName, stats]) => {        const avg = (stats.sumScore / stats.count).toFixed(2);        const passPct = ((stats.passCount / stats.count) * 100).toFixed(0);
+
+        const card = document.createElement('div');        card.className = 'flex items-center justify-between p-3 rounded-xl bg-white/70 border border-brand-100 text-xs';        card.innerHTML = `          <div>            <span class="font-bold text-slate-800">${qualName}</span>            <div class="text-[11px] text-slate-500 mt-0.5">${stats.count} students (${stats.passCount} passed)</div>          </div>          <div class="text-right">            <span class="font-bold text-brand-700 text-sm">${avg} avg</span>            <div class="text-[11px] text-emerald-700 font-semibold mt-0.5">${passPct}% pass rate</div>          </div>        `;        container.appendChild(card);      });    }
+
+    function renderRosterTable(data) {      const tbody = document.getElementById('rosterTbody');      tbody.innerHTML = '';
 
       document.getElementById('filteredRowCount').innerText = data.length;
 
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-500">No matching student records found.</td></tr>';
-        return;
-      }
+      if (data.length === 0) {        tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-500">No matching student records found.</td></tr>';        return;      }
 
-      data.forEach((row, i) => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-brand-50/60 transition';
+      data.forEach((row, i) => {        const tr = document.createElement('tr');        tr.className = 'hover:bg-brand-50/60 transition';
 
-        const isPass = row.score >= 12;
-        const formattedDate = row.timestamp.split(' ')[0] || row.timestamp;
+        const isPass = row.score >= 12;        const formattedDate = row.timestamp.split(' ')[0] || row.timestamp;
 
-        tr.innerHTML = `
-          <td class="p-3 text-slate-400 font-bold">${i + 1}</td>
-          <td class="p-3 text-slate-600">${formattedDate}</td>
-          <td class="p-3 font-extrabold text-brand-900">${row.score}</td>
-          <td class="p-3 font-bold text-slate-800">${row.name}</td>
-          <td class="p-3 font-mono text-slate-600">${row.code}</td>
-          <td class="p-3 text-slate-700">${row.qualification}</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded-md bg-brand-100 text-brand-800 font-semibold text-[11px]">${row.sourceSheet}</span></td>
-          <td class="p-3 text-center">
-            <span class="px-2.5 py-1 rounded-full font-bold text-[11px] ${isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-              ${isPass ? 'Passed' : 'Needs Work'}
-            </span>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+        tr.innerHTML = `          <td class="p-3 text-slate-400 font-bold">${i + 1}</td>          <td class="p-3 text-slate-600">${formattedDate}</td>          <td class="p-3 font-extrabold text-brand-900">${row.score}</td>          <td class="p-3 font-bold text-slate-800">${row.name}</td>          <td class="p-3 font-mono text-slate-600">${row.code}</td>          <td class="p-3 text-slate-700">${row.qualification}</td>          <td class="p-3"><span class="px-2 py-0.5 rounded-md bg-brand-100 text-brand-800 font-semibold text-[11px]">${row.sourceSheet}</span></td>          <td class="p-3 text-center">            <span class="px-2.5 py-1 rounded-full font-bold text-[11px] ${isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">              ${isPass ? 'Passed' : 'Needs Work'}            </span>          </td>        `;        tbody.appendChild(tr);      });    }
 
-    function filterRosterTable() {
-      const query = document.getElementById('tableSearch').value.toLowerCase();
-      const filtered = currentFilteredData.filter(d => 
-        d.name.toLowerCase().includes(query) ||
-        d.code.toLowerCase().includes(query) ||
-        d.qualification.toLowerCase().includes(query) ||
-        d.sourceSheet.toLowerCase().includes(query)
-      );
-      renderRosterTable(filtered);
-    }
+    function filterRosterTable() {      const query = document.getElementById('tableSearch').value.toLowerCase();      const filtered = currentFilteredData.filter(d =>         d.name.toLowerCase().includes(query) ||        d.code.toLowerCase().includes(query) ||        d.qualification.toLowerCase().includes(query) ||        d.sourceSheet.toLowerCase().includes(query)      );      renderRosterTable(filtered);    }
 
-    function renderItemAnalysis(data) {
-      const container = document.getElementById('questionsContainer');
-      container.innerHTML = '';
+    function renderItemAnalysis(data) {      const container = document.getElementById('questionsContainer');      container.innerHTML = '';
 
-      if (!questionColumns || questionColumns.length === 0) {
-        container.innerHTML = '<p class="text-center text-slate-500 py-6">No individual question columns detected.</p>';
-        return;
-      }
+      if (!questionColumns || questionColumns.length === 0) {        container.innerHTML = '<p class="text-center text-slate-500 py-6">No individual question columns detected.</p>';        return;      }
 
-      // Official Answer Key extracted from English Placement Test 2026 (A) - Google Forms
-      const correctAnswers = [
-        "Directly behind the desk surface within the workspace slot.",
-        "It is positioned between the LEFT ROW and RIGHT ROW.",
-        "2.30 meters",
-        "The entire office floor plan was drawn with thicker, bolder lines and larger digits.",
-        "behind",
-        "After the MOTOR PUMP on the pipe line",
-        "CHECK VALVE",
-        "To control or stop water coming from the tank",
-        "2.5 BAR",
-        "GAUGE ➡ OUTLET PIPE ➡ OUT",
-        "Water is pumped into the house through clean pipes.",
-        "between",
-        "Turn off",
-        "is used",
-        "is opened",
-        "through",
-        "First",
-        "The wooden table is made from oak.",
-        "on",
-        "must",
-        "AI agents can plan and complete tasks independently.",
-        "It checks calendars, books accommodation, and sends confirmations.",
-        "To manage supply chains and schedule maintenance.",
-        "They free humans to focus on creative problem-solving.",
-        "continuous human supervision"
-      ];
+      const correctAnswers = [        "Directly behind the desk surface within the workspace slot.",        "It is positioned between the LEFT ROW and RIGHT ROW.",        "2.30 meters",        "The entire office floor plan was drawn with thicker, bolder lines and larger digits.",        "behind",        "After the MOTOR PUMP on the pipe line",        "CHECK VALVE",        "To control or stop water coming from the tank",        "2.5 BAR",        "GAUGE ➡ OUTLET PIPE ➡ OUT",        "Water is pumped into the house through clean pipes.",        "between",        "Turn off",        "is used",        "is opened",        "through",        "First",        "The wooden table is made from oak.",        "on",        "must",        "AI agents can plan and complete tasks independently.",        "It checks calendars, books accommodation, and sends confirmations.",        "To manage supply chains and schedule maintenance.",        "They free humans to focus on creative problem-solving.",        "continuous human supervision"      ];
 
-      // Robust answer matching
-      function isCorrectAnswer(userAns, qIndex) {
-        if (qIndex >= correctAnswers.length) return false;
-        const target = correctAnswers[qIndex].toLowerCase().replace(/[^a-z0-9]/g, '');
-        const actual = userAns.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return actual.includes(target) || target.includes(actual);
-      }
+      function isCorrectAnswer(userAns, qIndex) {        if (qIndex >= correctAnswers.length) return false;        const target = correctAnswers[qIndex].toLowerCase().replace(/[^a-z0-9]/g, '');        const actual = userAns.toLowerCase().replace(/[^a-z0-9]/g, '');        return actual.includes(target) || target.includes(actual);      }
 
-      questionColumns.forEach((qTitle, qIdx) => {
-        const counts = {};
-        let answeredTotal = 0;
+      questionColumns.forEach((qTitle, qIdx) => {        const counts = {};        let answeredTotal = 0;
 
-        data.forEach(d => {
-          const ans = (d.answers[qIdx] || '').trim();
-          if (ans) {
-            counts[ans] = (counts[ans] || 0) + 1;
-            answeredTotal++;
-          }
-        });
+        data.forEach(d => {          const ans = (d.answers[qIdx] || '').trim();          if (ans) {            counts[ans] = (counts[ans] || 0) + 1;            answeredTotal++;          }        });
 
-        const qCard = document.createElement('div');
-        qCard.className = 'p-4 rounded-xl bg-white/80 border border-brand-200 text-xs space-y-3 shadow-sm';
+        const qCard = document.createElement('div');        qCard.className = 'p-4 rounded-xl bg-white/80 border border-brand-200 text-xs space-y-3 shadow-sm';
 
-        let optionsHtml = '';
-        Object.entries(counts).forEach(([ansText, count]) => {
-          const pct = answeredTotal > 0 ? ((count / answeredTotal) * 100).toFixed(1) : 0;
-          const isCorrect = isCorrectAnswer(ansText, qIdx);
+        let optionsHtml = '';        Object.entries(counts).forEach(([ansText, count]) => {          const pct = answeredTotal > 0 ? ((count / answeredTotal) * 100).toFixed(1) : 0;          const isCorrect = isCorrectAnswer(ansText, qIdx);
 
-          if (isCorrect) {
-            optionsHtml += `
-              <div class="p-2.5 rounded-lg bg-emerald-50 border-2 border-emerald-400 space-y-1">
-                <div class="flex justify-between items-center font-bold text-emerald-950 text-xs">
-                  <span class="truncate max-w-[70%] flex items-center gap-1.5">
-                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
-                    ${ansText}
-                  </span>
-                  <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded-md bg-emerald-200 text-emerald-800 text-[10px] uppercase tracking-wider font-extrabold">✓ Correct Answer</span>
-                    <span class="text-emerald-900 font-extrabold">${count} (${pct}%)</span>
-                  </div>
-                </div>
-                <div class="w-full h-2 bg-emerald-200/70 rounded-full overflow-hidden">
-                  <div class="h-full bg-emerald-500 rounded-full" style="width: ${pct}%"></div>
-                </div>
-              </div>
-            `;
-          } else {
-            optionsHtml += `
-              <div class="p-2 rounded-lg bg-slate-50/80 border border-slate-200/80 space-y-1">
-                <div class="flex justify-between font-medium text-slate-700 text-[11px]">
-                  <span class="truncate max-w-[80%]">${ansText}</span>
-                  <span class="font-bold text-slate-600">${count} (${pct}%)</span>
-                </div>
-                <div class="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
-                  <div class="h-full bg-slate-400 rounded-full" style="width: ${pct}%"></div>
-                </div>
-              </div>
-            `;
-          }
-        });
+          if (isCorrect) {            optionsHtml += `              <div class="p-2.5 rounded-lg bg-emerald-50 border-2 border-emerald-400 space-y-1">                <div class="flex justify-between items-center font-bold text-emerald-950 text-xs">                  <span class="truncate max-w-[70%] flex items-center gap-1.5">                    <i class="fa-solid fa-circle-check text-emerald-600"></i>                    ${ansText}                  </span>                  <div class="flex items-center gap-2">                    <span class="px-2 py-0.5 rounded-md bg-emerald-200 text-emerald-800 text-[10px] uppercase tracking-wider font-extrabold">✓ Correct Answer</span>                    <span class="text-emerald-900 font-extrabold">${count} (${pct}%)</span>                  </div>                </div>                <div class="w-full h-2 bg-emerald-200/70 rounded-full overflow-hidden">                  <div class="h-full bg-emerald-500 rounded-full" style="width: ${pct}%"></div>                </div>              </div>            `;          } else {            optionsHtml += `              <div class="p-2 rounded-lg bg-slate-50/80 border border-slate-200/80 space-y-1">                <div class="flex justify-between font-medium text-slate-700 text-[11px]">                  <span class="truncate max-w-[80%]">${ansText}</span>                  <span class="font-bold text-slate-600">${count} (${pct}%)</span>                </div>                <div class="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">                  <div class="h-full bg-slate-400 rounded-full" style="width: ${pct}%"></div>                </div>              </div>            `;          }        });
 
-        qCard.innerHTML = `
-          <div class="flex items-start justify-between gap-2">
-            <div class="font-bold text-brand-900 text-sm">Q${qIdx + 1}: ${qTitle}</div>
-            <span class="px-2 py-1 rounded-md bg-brand-100 text-brand-800 text-[10px] font-bold shrink-0">${answeredTotal} responses</span>
-          </div>
-          <div class="space-y-2 pt-1">
-            ${optionsHtml || '<p class="text-slate-400 italic">No responses recorded for this item.</p>'}
-          </div>
-        `;
+        qCard.innerHTML = `          <div class="flex items-start justify-between gap-2">            <div class="font-bold text-brand-900 text-sm">Q${qIdx + 1}: ${qTitle}</div>            <span class="px-2 py-1 rounded-md bg-brand-100 text-brand-800 text-[10px] font-bold shrink-0">${answeredTotal} responses</span>          </div>          <div class="space-y-2 pt-1">            ${optionsHtml || '<p class="text-slate-400 italic">No responses recorded for this item.</p>'}          </div>        `;
 
-        container.appendChild(qCard);
-      });
-    }
+        container.appendChild(qCard);      });    }
 
-    function switchTab(tabId) {
-      ['analytics', 'itemAnalysis', 'roster'].forEach(id => {
-        document.getElementById(`view-${id}`).classList.add('hidden');
-        document.getElementById(`tabBtn-${id}`).classList.remove('active');
-      });
+    function switchTab(tabId) {      ['analytics', 'itemAnalysis', 'roster', 'absentLow'].forEach(id => {        document.getElementById(`view-${id}`).classList.add('hidden');        document.getElementById(`tabBtn-${id}`).classList.remove('active');      });
 
-      document.getElementById(`view-${tabId}`).classList.remove('hidden');
-      document.getElementById(`tabBtn-${tabId}`).classList.add('active');
-    }
+      document.getElementById(`view-${tabId}`).classList.remove('hidden');      document.getElementById(`tabBtn-${tabId}`).classList.add('active');    }
 
-    function exportCSV() {
-      if (currentFilteredData.length === 0) return;
+    function exportCSV() {      if (currentFilteredData.length === 0) return;
 
-      let csvContent = "data:text/csv;charset=utf-8,Timestamp,Score,Name,Code,Qualification,SourceSheet\n";
-      currentFilteredData.forEach(r => {
-        const rowStr = `"${r.timestamp}",${r.score},"${r.name}","${r.code}","${r.qualification}","${r.sourceSheet}"`;
-        csvContent += rowStr + "\n";
-      });
+      let csvContent = "data:text/csv;charset=utf-8,Timestamp,Score,Name,Code,Qualification,SourceSheet\n";      currentFilteredData.forEach(r => {        const rowStr = `"${r.timestamp}",${r.score},"${r.name}","${r.code}","${r.qualification}","${r.sourceSheet}"`;        csvContent += rowStr + "\n";      });
 
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `English_Placement_Test_Combined_${Date.now()}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+      const encodedUri = encodeURI(csvContent);      const link = document.createElement("a");      link.setAttribute("href", encodedUri);      link.setAttribute("download", `English_Placement_Test_Combined_${Date.now()}.csv`);      document.body.appendChild(link);      link.click();      document.body.removeChild(link);    }
 
-    function adjustZoom(delta) {
-      currentZoom += delta;
-      if (currentZoom < 0.75) currentZoom = 0.75;
-      if (currentZoom > 1.3) currentZoom = 1.3;
-      document.getElementById('appContainer').style.transform = `scale(${currentZoom})`;
-    }
+    function exportAbsentLowCSV() {      if (filteredAbsentLowList.length === 0) return;
 
-    function toggleFullScreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
+      let csvContent = "\uFEFFCode,Name,Score,Status,Qualification,Source\n";      filteredAbsentLowList.forEach(r => {        const rowStr = `"${r.code}","${r.name}","${r.score}","${r.statusLabel}","${r.qualification}","${r.source}"`;        csvContent += rowStr + "\n";      });
 
-    // Initialize on page load
-    window.onload = () => {
-      fetchAllData();
-      // Auto refresh every 60 seconds
-      setInterval(fetchAllData, 60000);
-    };
-  </script>
-</body>
-</html>
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });      const url = URL.createObjectURL(blob);      const link = document.createElement("a");      link.setAttribute("href", url);      link.setAttribute("download", `KFS_Absent_and_Low_Performers_${Date.now()}.csv`);      document.body.appendChild(link);      link.click();      document.body.removeChild(link);    }
+
+    function adjustZoom(delta) {      currentZoom += delta;      if (currentZoom < 0.75) currentZoom = 0.75;      if (currentZoom > 1.3) currentZoom = 1.3;      document.getElementById('appContainer').style.transform = `scale(${currentZoom})`;    }
+
+    function toggleFullScreen() {      if (!document.fullscreenElement) {        document.documentElement.requestFullscreen();      } else if (document.exitFullscreen) {        document.exitFullscreen();      }    }
+
+    // Initialize on page load    window.onload = () => {      fetchAllData();      // Auto refresh every 60 seconds      setInterval(fetchAllData, 60000);    };  </script></body></html>
