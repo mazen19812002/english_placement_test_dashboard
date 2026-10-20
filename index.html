@@ -388,7 +388,14 @@
             <table class="w-full text-right text-xs border-collapse">
               <thead class="bg-rose-50 text-rose-900 sticky top-0 backdrop-blur-md z-10 font-bold">
                 <tr>
-                  <th class="p-3 text-right">الطلاب الغائبون (<span id="absentCount">0</span>)</th>
+                  <th class="p-3 text-right">
+                    <div class="flex items-center justify-between">
+                      <span>الطلاب الغائبون (<span id="absentCount">0</span>)</span>
+                      <button onclick="copyTableData('absent')" title="نسخ قائمة الغائبين" class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300/60 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                        <i class="fa-regular fa-copy"></i> نسخ القائمة
+                      </button>
+                    </div>
+                  </th>
                   <th class="p-3 text-right">كود الطالب</th>
                 </tr>
               </thead>
@@ -403,7 +410,14 @@
             <table class="w-full text-right text-xs border-collapse">
               <thead class="bg-amber-50 text-amber-900 sticky top-0 backdrop-blur-md z-10 font-bold">
                 <tr>
-                  <th class="p-3 text-right">الطلاب (7 فأقل) (<span id="lowScoreCount">0</span>)</th>
+                  <th class="p-3 text-right">
+                    <div class="flex items-center justify-between">
+                      <span>الطلاب (7 فأقل) (<span id="lowScoreCount">0</span>)</span>
+                      <button onclick="copyTableData('lowScore')" title="نسخ قائمة الضعاف" class="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300/60 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                        <i class="fa-regular fa-copy"></i> نسخ القائمة
+                      </button>
+                    </div>
+                  </th>
                   <th class="p-3 text-right">كود الطالب</th>
                   <th class="p-3 text-center">الدرجة</th>
                 </tr>
@@ -542,6 +556,33 @@
            </tr>
          `).join('');
        }
+    }
+
+    // Function to Copy Table Data to Clipboard
+    function copyTableData(type) {
+      let textToCopy = "";
+      if (type === 'absent') {
+        const submittedCodes = new Set(currentFilteredData.map(d => String(d.code).trim()));
+        const absentStudents = masterStudentList.filter(s => !submittedCodes.has(s.code));
+        if (absentStudents.length === 0) {
+          alert("لا توجد بيانات طلاب غائبين للنسخ");
+          return;
+        }
+        textToCopy = "اسم الطالب\tكود الطالب\n" + absentStudents.map(s => `${s.name}\t${s.code}`).join("\n");
+      } else if (type === 'lowScore') {
+        const lowScoreStudents = currentFilteredData.filter(d => d.score <= 7);
+        if (lowScoreStudents.length === 0) {
+          alert("لا توجد بيانات طلاب (7 فأقل) للنسخ");
+          return;
+        }
+        textToCopy = "اسم الطالب\tكود الطالب\tالدرجة\n" + lowScoreStudents.map(s => `${s.name}\t${s.code}\t${s.score}`).join("\n");
+      }
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        alert("تم نسخ القائمة بنجاح إلى الحافظة!");
+      }).catch(err => {
+        console.error("خطأ أثناء النسخ: ", err);
+      });
     }
 
     // CSV Parser handling quotes and line breaks inside cells
